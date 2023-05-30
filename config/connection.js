@@ -8,14 +8,15 @@ const DB_HOST = 'localhost';
 const DB_PORT = 3306;
 
 // Create the Sequelize instance
-const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+const connectDB = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
   host: DB_HOST,
   port: DB_PORT,
   dialect: 'mysql',
 });
 
 // Test the database connection
-sequelize
+
+ connectDB
   .authenticate()
   .then(() => {
     console.log('Database connection has been established successfully.');
@@ -24,4 +25,4 @@ sequelize
     console.error('Unable to connect to the database:', err);
   });
 
-module.exports = sequelize;
+module.exports = connectDB

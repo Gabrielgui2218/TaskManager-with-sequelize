@@ -1,70 +1,80 @@
-let { db } = require('../config/connection.js')
+const Task = require('../model/taskModels.js');
 
-const createTask = (req, res) => {
-    const { id, name, date } = req.body;
-    
-    const taskExist = db.some((task) => task.id === id)
+const createTask = async (req, res) => {
+  const { name, date } = req.body;
 
-    if (!taskExist) {
-      db.push({
-        id: id,
-        name: name,
-        date: date,
+  try {
+    const task = await Task.create({
+      name: name,
+      date: date
+    });
+
+    res.status(201).json({ message: 'Task created successfully', task });
+  } catch (error) {
+    console.error('Error creating task:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+const getAllTasks = async (req, res) => {
+  try {
+    const tasks = await Task.findAll();
+
+    if (tasks.length >= 1) {
+      res.status(200).json(tasks);
+    } else {
+      res.status(400).json({ message: 'No tasks found in the database' });
+    }
+  } catch (error) {
+    console.error('Error retrieving tasks:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+const updateTask = async (req, res) => {
+  const { id } = req.params;
+  const { name, date } = req.body;
+
+  try {
+    const task = await Task.findByPk(id);
+
+    if (task) {
+      await task.update({
+        name: name || task.name,
+        date: date || task.date
       });
-      
-      res.status(201).json({ message: 'Salvo com sucesso'})
-    } 
 
-    res.status(400).send('Usuario já existe na nossa base de dados')
-  };
-
-const getAllTasks = (req, res) =>{
-
-    if(db.length >= 1){
-        res.send(db).status(200)
-    }
-
-    return res.status(400).json({message: 'Não existem tasks no banco de dados'})
-}
-
-const updateTask = (req, res) => {
-    const { id } = req.params;
-    const { name, date } = req.body;
-  
-    const taskIndex = db.findIndex((task) => task.id === id);
-  
-    if (taskIndex !== -1) {
-      db[taskIndex] = {
-        ...db[taskIndex],
-        name: name || db[taskIndex].name,
-        date: date || db[taskIndex].date,
-      };
-  
-      res.status(200).send('Task updated: ' + JSON.stringify(db[taskIndex]));
+      res.status(200).json({ message: 'Task updated successfully', task });
     } else {
       res.status(400).json({ message: 'Task not found' });
     }
-  };
-  
-  const deleteTask = (req, res) => {
-    const { id } = req.params;
-  
-    const taskIndex = db.findIndex((task) => task.id === id);
-  
-    if (taskIndex !== -1) {
-      const deletedTask = db.splice(taskIndex, 1);
-      res.status(200).send('Task deleted: ' + JSON.stringify(deletedTask));
+  } catch (error) {
+    console.error('Error updating task:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+const deleteTask = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const task = await Task.findByPk(id);
+
+    if (task) {
+      await task.destroy();
+      res.status(200).json({ message: 'Task deleted successfully' });
     } else {
       res.status(400).json({ message: 'Task not found' });
     }
-  };
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
-  
 module.exports = {
-    createTask,
-    getAllTasks,
-    updateTask,
-    deleteTask,
-}
-
-
+  createTask,
+  getAllTasks,
+  updateTask,
+  deleteTask
+};
